@@ -100,12 +100,25 @@ if submit_btn:
                 st.success("強みの発掘が完了しました！")
                 st.markdown("---")
                 st.markdown(response.text)
+
+# --- ダウンロード用のテキストを組み立てる ---
+                download_text = f"""【あなたの入力内容】
+■Q1. 経験・続けていること
+{experience}
+
+■Q2. 工夫したこと・気をつけたこと
+{effort}
+
+==================================================
+【AIからの分析結果】
+{response.text}
+"""
                 
                 # --- ダウンロードボタン ---
                 st.markdown("---")
                 st.download_button(
-                    label="📝 この結果をテキストファイルで保存（ダウンロード）する",
-                    data=response.text,
+                    label="📝 入力内容と分析結果を保存（ダウンロード）する",
+                    data=download_text,
                     file_name="portable_skills_result.txt",
                     mime="text/plain"
                 )

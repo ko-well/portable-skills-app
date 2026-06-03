@@ -4,18 +4,120 @@ import google.generativeai as genai
 # --- ページ設定とデザイン ---
 st.set_page_config(page_title="自己資源・強み発見アシスタント", layout="wide")
 
+# --- カスタムCSS（壁紙・明朝体・桜色テーマ・スマホ対応） ---
 st.markdown("""
 <style>
-h1, h2, h3 { color: #1A5276 !important; }
-label p, [data-testid="stWidgetLabel"] p { font-size: 18px !important; color: #2874A6 !important; font-weight: bold !important; }
-[data-testid="stFormSubmitButton"] { display: flex; justify-content: center; margin-top: 20px; margin-bottom: 20px; }
-[data-testid="stFormSubmitButton"] button { background-color: #27AE60 !important; color: white !important; font-size: 20px !important; font-weight: bold !important; padding: 15px 50px !important; border-radius: 10px !important; border: none !important; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-[data-testid="stFormSubmitButton"] button:hover { background-color: #1E8449 !important; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+/* 1. 全体のフォントを游明朝に統一（アイコン崩れ防止のため span は除外） */
+html, body, p, div, a, button, h1, h2, h3, h4, h5, h6, label {
+    font-family: 'Yu Mincho', '游明朝', 'YuMincho', 'Hiragino Mincho ProN', 'HGS明朝E', serif !important;
+}
+
+/* 2. ページ全体の壁紙（和紙風テクスチャ） */
+.stApp {
+    background-color: #FCFAFA;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E");
+    background-attachment: fixed;
+}
+
+/* 3. ヘッダーデザイン（PC用） */
+.header-box {
+    text-align: center;
+    padding: 3rem 1rem;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-bottom: 2px solid #DB90A0;
+    margin-bottom: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+}
+.header-title { font-size: 2.2rem; font-weight: 700; color: #3D2D2E; }
+.header-subtitle { font-size: 1.1rem; color: #5C4B4D; margin-top: 0.8rem; line-height: 1.6; }
+
+/* 4. 各種コンテナ・ボックスのデザイン */
+div[data-testid="stForm"] {
+    background-color: rgba(255, 255, 255, 0.9) !important;
+    border-radius: 8px !important;
+    padding: 30px !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03) !important;
+}
+.result-box {
+    background-color: #FDFEFE;
+    padding: 25px;
+    border-radius: 8px;
+    border-left: 5px solid #DB90A0;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+    font-size: 1.05rem;
+    line-height: 1.8;
+}
+
+h1, h2, h3 { color: #3D2D2E !important; }
+
+/* 5. スマートフォン向けの画面表示設定（レスポンシブ対応） */
+@media screen and (max-width: 768px) {
+    .header-title { font-size: 1.5rem !important; }
+    .header-subtitle { font-size: 0.95rem !important; margin-top: 0.8rem !important; }
+    .header-box { padding: 2rem 1rem !important; }
+    
+    div[data-testid="stForm"] { padding: 15px !important; }
+    .result-box { padding: 15px !important; font-size: 0.95rem !important; }
+    
+    h2 { font-size: 1.3rem !important; }
+    h3 { font-size: 1.1rem !important; margin-bottom: 0.5rem !important; }
+    p, label { font-size: 0.95rem !important; line-height: 1.6 !important; }
+    
+    /* スマホ用ボタン調整（横幅いっぱい） */
+    [data-testid="stFormSubmitButton"] button, 
+    .stButton button, 
+    [data-testid="stDownloadButton"] button,
+    [data-testid="stLinkButton"] a {
+        padding: 0.6rem 1rem !important;
+        font-size: 1rem !important;
+        width: 100% !important;
+        text-align: center;
+        margin-bottom: 10px !important;
+    }
+}
+
+/* 6. ボタンのデザイン（PC用ベース） */
+[data-testid="stFormSubmitButton"] button, 
+.stButton button,
+[data-testid="stDownloadButton"] button,
+[data-testid="stLinkButton"] a {
+    background-color: #DB90A0 !important;
+    color: #ffffff !important;
+    border-radius: 6px !important;
+    padding: 0.7rem 3rem !important;
+    font-size: 1.1rem !important;
+    font-weight: 600 !important;
+    width: 100% !important;
+    text-align: center;
+    text-decoration: none !important;
+    transition: all 0.3s ease;
+}
+[data-testid="stFormSubmitButton"] button:hover,
+.stButton button:hover,
+[data-testid="stDownloadButton"] button:hover,
+[data-testid="stLinkButton"] a:hover {
+    background-color: #C27082 !important;
+    transform: translateY(-2px);
+}
+[data-testid="stLinkButton"] a *,
+[data-testid="stDownloadButton"] button * {
+    color: #ffffff !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🌱 自己資源・強み発見アシスタント")
-st.write("あなたが「なんでもない」と思っている経験や，当たり前に続けていることには，ビジネスで通用する立派な「強み（ポータブルスキル）」が隠れています。AIと一緒に，あなたの魅力を見つけ出しましょう！")
+# --- タイトル表示 ---
+st.markdown('''
+<div class="header-box">
+    <div class="header-title">🌱 自己資源・強み発見アシスタント</div>
+    <div class="header-subtitle">
+        あなたが「なんでもない」と思っている経験や、当たり前に続けていることには、ビジネスで通用する立派な「強み（ポータブルスキル）」が隠れています。AIと一緒に、あなたの魅力を見つけ出しましょう！
+    </div>
+</div>
+''', unsafe_allow_html=True)
 
 # --- はじめての方へ（APIキー入力） ---
 with st.expander("🔑 ご利用には無料のAPIキーが必要です（取得方法はこちら）", expanded=False):
@@ -99,7 +201,11 @@ if submit_btn:
                 response = model.generate_content(prompt)
                 st.success("強みの発掘が完了しました！")
                 st.markdown("---")
+                
+                # ★ 出力結果をデザイン枠の中に表示
+                st.markdown("<div class='result-box'>", unsafe_allow_html=True)
                 st.markdown(response.text)
+                st.markdown("</div>", unsafe_allow_html=True)
 
 # --- ダウンロード用のテキストを組み立てる ---
                 download_text = f"""【あなたの入力内容】
@@ -124,3 +230,7 @@ if submit_btn:
                 )
             except Exception as e:
                 st.error(f"エラーが発生しました。詳細: {e}")
+
+# --- ポータルサイトへ戻るボタン ---
+st.markdown("---")
+st.link_button("🏠 C.HARIGOMA キャリア支援ポータルへ戻る", "https://harigoma-career.streamlit.app/")

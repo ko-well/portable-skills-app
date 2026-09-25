@@ -1,6 +1,22 @@
 import streamlit as st
 import google.generativeai as genai
 
+# --- AIモデルの自動フォールバック（切り替え）関数 ---
+# 最新版でエラーが起きた場合、自動的に従来版へ切り替えてアプリの停止を防ぎます。
+def generate_with_fallback(prompt_text):
+    try:
+        # 第一候補：最新モデル
+        model = genai.GenerativeModel('gemini-3.8-flash')
+        return model.generate_content(prompt_text)
+    except Exception as e_new:
+        try:
+            # 失敗した場合、自動的に従来のモデルに切り替える
+            model_old = genai.GenerativeModel('gemini-2.5-flash')
+            return model_old.generate_content(prompt_text)
+        except Exception as e_old:
+            # どちらも失敗した場合は詳細なエラーを返す
+            raise Exception(f"最新版エラー: {e_new} / 従来版エラー: {e_old}")
+
 # --- ページ設定とデザイン ---
 st.set_page_config(page_title="自己資源・強み発見アシスタント", layout="wide")
 
@@ -163,7 +179,6 @@ if submit_btn:
         st.warning("⚠️ Q1の「経験」は最低限入力してください。")
     else:
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-2.5-flash')
 
         user_name = user_name_input if user_name_input else "あなた"
 
@@ -198,16 +213,17 @@ if submit_btn:
 
         with st.spinner('キャリアコンサルタントAIがあなたの「強み」を発掘しています...'):
             try:
-                response = model.generate_content(prompt)
+                # ★修正：安全装置（自動切り替え関数）経由でAIに指示を出します
+                response = generate_with_fallback(prompt)
                 st.success("強みの発掘が完了しました！")
                 st.markdown("---")
                 
-                # ★ 出力結果をデザイン枠の中に表示
+                # 出力結果をデザイン枠の中に表示
                 st.markdown("<div class='result-box'>", unsafe_allow_html=True)
                 st.markdown(response.text)
                 st.markdown("</div>", unsafe_allow_html=True)
 
-# --- ダウンロード用のテキストを組み立てる ---
+                # --- ダウンロード用のテキストを組み立てる ---
                 download_text = f"""【あなたの入力内容】
 ■Q1. 経験・続けていること
 {experience}
